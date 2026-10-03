@@ -3,17 +3,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CancelIcon from '@mui/icons-material/Cancel'
 
 import { flagEmoji } from '../../services/countries'
+import { lineTypeLabel } from '../../services/lineTypes'
 import { useValidationState } from '../../state/validationContexts'
 import { selectLastEntry } from '../../state/validationReducer'
-
-const LINE_TYPE_LABELS = {
-  mobile: 'Celular',
-  landline: 'Fixo',
-  voip: 'VoIP',
-  special_services: 'Serviço especial',
-  toll_free: 'Discagem gratuita',
-  premium_rate: 'Tarifa premium',
-}
 
 const SOURCE_LABELS = {
   api: 'Consulta à API',
@@ -102,7 +94,7 @@ export default function ResultCard() {
           />
           <Field label="Localidade" value={result.location} />
           <Field label="Operadora" value={result.carrier} />
-          <Field label="Tipo de linha" value={LINE_TYPE_LABELS[result.line_type] ?? result.line_type} />
+          <Field label="Tipo de linha" value={lineTypeLabel(result.line_type)} />
         </Stack>
       ) : (
         <Typography color="text.secondary">

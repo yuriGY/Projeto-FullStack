@@ -1,4 +1,4 @@
-# ValidaFone — Central de Validação de Contatos
+# ValidaFone - Central de Validação de Contatos
 
 Projeto 1 da disciplina **Programação Web Fullstack**. SPA em React.js que consome a API JSON pública
 [Numverify](https://numverify.com) para validar números de telefone e enriquecê-los com operadora, tipo
@@ -88,10 +88,11 @@ O plano gratuito da Numverify não aceita HTTPS. Se a página for servida por `h
 a chamada por *mixed content* e nada funciona. Por isso a aplicação é apresentada pelo servidor de
 desenvolvimento, e **não deve ser publicada** em Vercel, Netlify ou GitHub Pages.
 
-**2. Cada clique em "Validar" gasta 1 das 100 consultas do mês.**
-A cota é mensal e compartilhada por quem usa a mesma chave. Repetir o mesmo número também gasta — o cache
-que evita isso é da Parte 2, ainda não implementada. **Teste com parcimônia.** Entradas inválidas (vazia,
-curta demais, acima de 15 dígitos) são barradas localmente e não consomem a cota.
+**2. Cada número novo gasta 1 das 100 consultas do mês.**
+A cota é mensal e compartilhada por quem usa a mesma chave, e o contador no topo da tela mostra o saldo.
+**Teste com parcimônia.** Três coisas *não* consomem cota: repetir um número já consultado (resolve pelo
+cache, e a linha é marcada como "em cache"), entradas inválidas (vazia, curta demais, acima de 15 dígitos),
+e o botão de revalidar é a única ação que força uma consulta nova de propósito.
 
 **3. Não publique o conteúdo de `dist/`.**
 Variáveis `VITE_*` são embutidas no código gerado, ou seja, a chave fica legível para qualquer pessoa que
@@ -150,7 +151,7 @@ Nenhum componente guarda cópia do histórico: tudo é derivado do estado centra
 | Parte | Escopo | Situação |
 |---|---|---|
 | 1 | Fundação, cliente HTTP, estado central, formulário e resultado | ✔ concluída |
-| 2 | Histórico em tabela, filtros, busca, cache de cota e validação em lote | a fazer |
+| 2 | Histórico em tabela, filtros, busca, cache de cota e validação em lote | ✔ concluída |
 | 3 | Painel analítico, detalhamento, exportação CSV e documentação | a fazer |
 
 ---

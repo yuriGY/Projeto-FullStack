@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react'
 import { Button, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd'
 
 import PhoneInput from './PhoneInput'
+import BatchDialog from './BatchDialog'
 import { COUNTRIES, findCountry, flagEmoji } from '../../services/countries'
 import { isInternational, validateInput } from '../../services/normalizePhone'
 import { useValidation } from '../../hooks/useValidation'
@@ -17,6 +19,7 @@ export default function ValidationForm() {
   const [number, setNumber] = useState('')
   const [country, setCountry] = useState('BR')
   const [localError, setLocalError] = useState('')
+  const [batchOpen, setBatchOpen] = useState(false)
 
   const inputRef = useRef(null)
   const international = isInternational(number)
@@ -40,9 +43,19 @@ export default function ValidationForm() {
 
   return (
     <Paper component="form" onSubmit={handleSubmit} variant="outlined" sx={{ p: 3 }}>
-      <Typography variant="h6" component="h2" gutterBottom>
-        Validar número
-      </Typography>
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+        <Typography variant="h6" component="h2">
+          Validar número
+        </Typography>
+        <Button
+          type="button"
+          size="small"
+          startIcon={<PlaylistAddIcon />}
+          onClick={() => setBatchOpen(true)}
+        >
+          Validar em lote
+        </Button>
+      </Stack>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'flex-start' }}>
         <TextField
@@ -85,6 +98,8 @@ export default function ValidationForm() {
           Validar
         </Button>
       </Stack>
+
+      <BatchDialog open={batchOpen} onClose={() => setBatchOpen(false)} />
     </Paper>
   )
 }

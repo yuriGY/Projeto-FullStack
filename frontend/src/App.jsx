@@ -3,6 +3,7 @@ import { CssBaseline, ThemeProvider } from '@mui/material'
 import AppLayout from './components/layout/AppLayout'
 import ValidationForm from './components/form/ValidationForm'
 import ResultCard from './components/result/ResultCard'
+import HistoryPanel from './components/history/HistoryPanel'
 import { ValidationProvider } from './state/ValidationProvider'
 import { theme } from './theme'
 
@@ -14,6 +15,7 @@ export default function App() {
         <AppLayout>
           <ValidationForm />
           <ResultCard />
+          <HistoryPanel />
         </AppLayout>
       </ValidationProvider>
     </ThemeProvider>
