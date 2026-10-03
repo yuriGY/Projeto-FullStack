@@ -27,6 +27,7 @@ export function saveState(state) {
     const snapshot = {
       entries: state.entries,
       quota: state.quota,
+      cache: state.cache,
     }
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
   } catch {
