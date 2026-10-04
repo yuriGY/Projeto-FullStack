@@ -41,15 +41,20 @@ function StatusChip({ entry }) {
  * Envolvida em `memo` porque o reducer só troca a referência do registro que
  * mudou: ao validar um número novo, ou ao revalidar um existente, as outras
  * linhas recebem exatamente o mesmo objeto e param de re-renderizar. Para isso
- * funcionar, `onRevalidate` e `onRemove` precisam ter identidade estável — por
+ * funcionar, `onRevalidate` e `onRemove` precisam ter identidade estável, por
  * isso recebem o id como argumento em vez de virem como closure por linha.
  */
-const HistoryRow = memo(function HistoryRow({ entry, onRevalidate, onRemove }) {
+const HistoryRow = memo(function HistoryRow({ entry, onSelect, onRevalidate, onRemove }) {
   const { result } = entry
   const ocupada = entry.status === 'loading' || entry.status === 'idle'
 
   return (
-    <TableRow hover>
+    <TableRow
+      hover
+      onClick={() => onSelect(entry.id)}
+      sx={{ cursor: 'pointer' }}
+      aria-label={`Ver detalhes de ${result?.international_format || entry.raw}`}
+    >
       <TableCell>
         <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
           {result?.international_format || entry.raw}
@@ -79,7 +84,7 @@ const HistoryRow = memo(function HistoryRow({ entry, onRevalidate, onRemove }) {
         </Typography>
       </TableCell>
 
-      <TableCell align="right">
+      <TableCell align="right" onClick={(event) => event.stopPropagation()}>
         <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
           <Tooltip title="Revalidar (ignora o cache e gasta 1 consulta)">
             <IconButton size="small" disabled={ocupada} onClick={() => onRevalidate(entry.id)}>

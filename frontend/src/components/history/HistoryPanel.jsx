@@ -1,10 +1,13 @@
 import { useCallback, useMemo } from 'react'
-import { LinearProgress, Paper, Stack, Typography } from '@mui/material'
+import { Button, LinearProgress, Paper, Stack, Typography } from '@mui/material'
+import DownloadIcon from '@mui/icons-material/Download'
 
 import FilterBar from './FilterBar'
 import HistoryTable from './HistoryTable'
 import { useValidation } from '../../hooks/useValidation'
+import { useToast } from '../../hooks/useToast'
 import { useValidationDispatch, useValidationState } from '../../state/validationContexts'
+import { downloadCsv } from '../../utils/exportCsv'
 import {
   ACTIONS,
   collectFilterOptions,
@@ -21,6 +24,7 @@ export default function HistoryPanel() {
   const state = useValidationState()
   const dispatch = useValidationDispatch()
   const { revalidate } = useValidation()
+  const toast = useToast()
 
   const options = useMemo(() => collectFilterOptions(state.entries), [state.entries])
 
@@ -43,15 +47,40 @@ export default function HistoryPanel() {
     (id) => dispatch({ type: ACTIONS.REMOVE_ENTRY, payload: { id } }),
     [dispatch],
   )
-  const handleClear = useCallback(() => dispatch({ type: ACTIONS.CLEAR_HISTORY }), [dispatch])
+  const handleSelect = useCallback(
+    (id) => dispatch({ type: ACTIONS.SELECT_ENTRY, payload: { id } }),
+    [dispatch],
+  )
+  const handleClear = useCallback(() => {
+    const total = state.entries.length
+    dispatch({ type: ACTIONS.CLEAR_HISTORY })
+    toast('info', `Histórico limpo (${total} registro(s)). O cache foi preservado.`)
+  }, [dispatch, toast, state.entries.length])
   const handleRevalidate = useCallback((id) => revalidate(id), [revalidate])
+
+  /**
+   * Exporta exatamente a fatia visível, não o histórico bruto, que é o que prova
+   * que a exportação e os filtros compartilham o mesmo estado.
+   */
+  const handleExport = useCallback(() => {
+    const total = downloadCsv(visible)
+    toast('success', `${total} registro(s) exportado(s) em CSV.`)
+  }, [visible, toast])
 
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'baseline', mb: 2 }}>
-        <Typography variant="h6" component="h2">
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+        <Typography variant="h6" component="h2" sx={{ flexGrow: 1 }}>
           Histórico
         </Typography>
+        <Button
+          size="small"
+          startIcon={<DownloadIcon />}
+          disabled={visible.length === 0}
+          onClick={handleExport}
+        >
+          Exportar CSV
+        </Button>
       </Stack>
 
       {progresso ? (
@@ -76,6 +105,7 @@ export default function HistoryPanel() {
         entries={visible}
         sort={state.sort}
         onSort={handleSort}
+        onSelect={handleSelect}
         onRevalidate={handleRevalidate}
         onRemove={handleRemove}
         hasEntries={state.entries.length > 0}

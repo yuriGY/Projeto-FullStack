@@ -16,7 +16,11 @@ export const ACTIONS = {
   REMOVE_ENTRY: 'REMOVE_ENTRY',
   CLEAR_HISTORY: 'CLEAR_HISTORY',
   SET_FILTER: 'SET_FILTER',
+  CLEAR_FILTERS: 'CLEAR_FILTERS',
   SET_SORT: 'SET_SORT',
+  SELECT_ENTRY: 'SELECT_ENTRY',
+  PUSH_TOAST: 'PUSH_TOAST',
+  DISMISS_TOAST: 'DISMISS_TOAST',
 }
 
 export const EMPTY_FILTERS = {
@@ -46,9 +50,13 @@ export const initialState = {
   quota: { used: 0, limit: quotaLimit(), month: currentMonth() },
   filters: EMPTY_FILTERS,
   sort: { field: 'createdAt', direction: 'desc' },
+  /** Registro aberto no painel de detalhe. */
+  selectedId: null,
+  /** Notificações exibidas pelo ToastHost. */
+  toasts: [],
 }
 
-/** Zera o consumo quando o mês vira — a cota da apilayer é mensal. */
+/** Zera o consumo quando o mês vira, porque a cota da apilayer é mensal. */
 function rollQuota(quota) {
   const month = currentMonth()
   if (quota?.month === month) return { ...quota, limit: quotaLimit() }
@@ -165,23 +173,38 @@ export function validationReducer(state, action) {
         ...state,
         entries,
         lastEntryId: state.lastEntryId === id ? (entries[0]?.id ?? null) : state.lastEntryId,
+        selectedId: state.selectedId === id ? null : state.selectedId,
         ...advanceQueue(state, id),
       }
     }
 
     case ACTIONS.CLEAR_HISTORY:
-      return { ...state, entries: [], lastEntryId: null, queue: [], queueTotal: 0 }
+      return { ...state, entries: [], lastEntryId: null, selectedId: null, queue: [], queueTotal: 0 }
 
     case ACTIONS.SET_FILTER: {
       const { key, value } = action.payload
       return { ...state, filters: { ...state.filters, [key]: value } }
     }
 
+    case ACTIONS.CLEAR_FILTERS:
+      return { ...state, filters: EMPTY_FILTERS }
+
     case ACTIONS.SET_SORT: {
       const { field } = action.payload
       const direction = state.sort.field === field && state.sort.direction === 'desc' ? 'asc' : 'desc'
       return { ...state, sort: { field, direction } }
     }
+
+    case ACTIONS.SELECT_ENTRY:
+      return { ...state, selectedId: action.payload.id }
+
+    case ACTIONS.PUSH_TOAST: {
+      const toast = action.payload
+      return { ...state, toasts: [...state.toasts, toast] }
+    }
+
+    case ACTIONS.DISMISS_TOAST:
+      return { ...state, toasts: state.toasts.filter((toast) => toast.id !== action.payload.id) }
 
     default:
       return state
@@ -200,6 +223,16 @@ export function selectQuotaRemaining(state) {
 export function selectBatchProgress(state) {
   if (state.queueTotal === 0) return null
   return { done: state.queueTotal - state.queue.length, total: state.queueTotal }
+}
+
+export function selectSelectedEntry(state) {
+  if (!state.selectedId) return null
+  return state.entries.find((entry) => entry.id === state.selectedId) ?? null
+}
+
+/** Indica se algum filtro está restringindo o histórico no momento. */
+export function selectFiltersActive(state) {
+  return Object.keys(EMPTY_FILTERS).some((key) => state.filters[key] !== EMPTY_FILTERS[key])
 }
 
 function matchesText(entry, text) {

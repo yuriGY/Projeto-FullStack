@@ -4,6 +4,7 @@ import { NumverifyError, validatePhone } from '../services/numverifyClient'
 import { buildQuery, cacheKey } from '../services/normalizePhone'
 import { ACTIONS } from '../state/validationReducer'
 import { useValidationDispatch, useValidationState } from '../state/validationContexts'
+import { useToast } from './useToast'
 
 const SOURCE_API = 'api'
 
@@ -37,6 +38,14 @@ function toErrorPayload(error) {
   }
 }
 
+function resumoDoLote({ validos, invalidos, falhas, doCache }) {
+  const partes = [`${validos} ${validos === 1 ? 'válido' : 'válidos'}`]
+  if (invalidos > 0) partes.push(`${invalidos} ${invalidos === 1 ? 'inválido' : 'inválidos'}`)
+  if (falhas > 0) partes.push(`${falhas} ${falhas === 1 ? 'falha' : 'falhas'}`)
+  const base = `Lote concluído: ${partes.join(', ')}`
+  return doCache > 0 ? `${base} · ${doCache} resolvido(s) pelo cache` : base
+}
+
 /**
  * Orquestra as consultas: cria os registros, resolve pelo cache quando possível
  * e traduz o desfecho em ações do reducer.
@@ -44,12 +53,13 @@ function toErrorPayload(error) {
 export function useValidation() {
   const state = useValidationState()
   const dispatch = useValidationDispatch()
+  const toast = useToast()
 
   /** Requisição em voo, para ser cancelada quando outra começa. */
   const controllerRef = useRef(null)
   /**
    * Cada consulta recebe um número sequencial. Se uma resposta lenta chegar
-   * depois que outra consulta já foi disparada, ela é descartada — senão o
+   * depois que outra consulta já foi disparada, ela é descartada, senão o
    * resultado antigo sobrescreveria o mais recente.
    */
   const requestIdRef = useRef(0)
@@ -67,8 +77,16 @@ export function useValidation() {
 
   useEffect(() => () => controllerRef.current?.abort(), [])
 
+  /**
+   * Executa uma consulta para um registro que já existe no histórico.
+   *
+   * @param {{ id: string, raw: string, countryCode: string, allowCache?: boolean, notify?: boolean }} params
+   *   `notify` fica desligado no lote, que emite um único resumo no fim em vez
+   *   de uma notificação por item.
+   * @returns {Promise<{ status: 'success'|'error', valid?: boolean, source?: string }>}
+   */
   const runRequest = useCallback(
-    async ({ id, raw, countryCode, allowCache = true }) => {
+    async ({ id, raw, countryCode, allowCache = true, notify = true }) => {
       const query = buildQuery(raw, countryCode)
       const chave = cacheKey(raw, countryCode)
 
@@ -76,7 +94,7 @@ export function useValidation() {
         const emCache = stateRef.current.cache?.[chave]
         if (emCache) {
           dispatch({ type: ACTIONS.REQUEST_CACHED, payload: { id, result: emCache } })
-          return
+          return { status: 'success', valid: Boolean(emCache.valid), source: 'cache' }
         }
       }
 
@@ -96,11 +114,12 @@ export function useValidation() {
           signal: controller.signal,
         })
 
-        if (requestId !== requestIdRef.current) return
+        if (requestId !== requestIdRef.current) return { status: 'error' }
         dispatch({
           type: ACTIONS.REQUEST_SUCCESS,
           payload: { id, result, source: SOURCE_API, cacheKey: chave },
         })
+        return { status: 'success', valid: Boolean(result.valid), source: SOURCE_API }
       } catch (error) {
         if (error?.name === 'AbortError') {
           dispatch({
@@ -111,29 +130,24 @@ export function useValidation() {
               error: { code: null, type: 'aborted', info: 'Consulta cancelada por uma nova busca.' },
             },
           })
-          return
+          return { status: 'error' }
         }
 
-        if (error?.name === 'TimeoutError') {
-          dispatch({
-            type: ACTIONS.REQUEST_ERROR,
-            payload: {
-              id,
-              source: SOURCE_API,
-              error: { code: null, type: 'timeout', info: 'A API demorou demais para responder.' },
-            },
-          })
-          return
+        const payload =
+          error?.name === 'TimeoutError'
+            ? { code: null, type: 'timeout', info: 'A API demorou demais para responder.' }
+            : toErrorPayload(error)
+
+        if (error?.name !== 'TimeoutError' && requestId !== requestIdRef.current) {
+          return { status: 'error' }
         }
 
-        if (requestId !== requestIdRef.current) return
-        dispatch({
-          type: ACTIONS.REQUEST_ERROR,
-          payload: { id, source: SOURCE_API, error: toErrorPayload(error) },
-        })
+        dispatch({ type: ACTIONS.REQUEST_ERROR, payload: { id, source: SOURCE_API, error: payload } })
+        if (notify) toast('error', payload.info)
+        return { status: 'error' }
       }
     },
-    [dispatch],
+    [dispatch, toast],
   )
 
   const validate = useCallback(
@@ -152,15 +166,28 @@ export function useValidation() {
 
       dispatch({ type: ACTIONS.ADD_BATCH, payload: { entries } })
 
+      const tally = { validos: 0, invalidos: 0, falhas: 0, doCache: 0 }
+
       for (let indice = 0; indice < entries.length; indice += 1) {
-        await runRequest({
+        const outcome = await runRequest({
           id: entries[indice].id,
           raw: items[indice].raw,
           countryCode: items[indice].countryCode,
+          notify: false,
         })
+
+        if (outcome.status === 'error') {
+          tally.falhas += 1
+        } else {
+          if (outcome.valid) tally.validos += 1
+          else tally.invalidos += 1
+          if (outcome.source === 'cache') tally.doCache += 1
+        }
       }
+
+      toast(tally.falhas > 0 ? 'warning' : 'success', resumoDoLote(tally))
     },
-    [dispatch, runRequest],
+    [dispatch, runRequest, toast],
   )
 
   const revalidate = useCallback(
