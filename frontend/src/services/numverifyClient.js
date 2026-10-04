@@ -7,7 +7,7 @@
  *    o erro 105 ("Subscription Plan does not support HTTPS Encryption"), por
  *    isso o endpoint permanece em http:// e a aplicação roda em localhost.
  * 2. Erro de negócio chega como HTTP 200 com `success: false` no corpo. Ou
- *    seja, `response.ok` não diz se a consulta deu certo — é preciso ler o
+ *    seja, `response.ok` não diz se a consulta deu certo, então é preciso ler o
  *    corpo antes de tratar o payload como resultado.
  */
 
@@ -19,7 +19,7 @@ const KNOWN_ERRORS = {
   101: 'Chave de acesso inválida. Confira VITE_NUMVERIFY_KEY em frontend/.env.local.',
   102: 'A conta na apilayer está inativa.',
   103: 'Função de API inexistente.',
-  104: 'Cota mensal esgotada — o plano gratuito permite 100 consultas por mês.',
+  104: 'Cota mensal esgotada, o plano gratuito permite 100 consultas por mês.',
   105: 'O plano gratuito não permite HTTPS. O endpoint precisa continuar em http://.',
   106: 'A API não retornou resultado para esse número.',
   210: 'Nenhum número foi enviado na consulta.',

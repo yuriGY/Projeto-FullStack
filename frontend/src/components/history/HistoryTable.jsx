@@ -21,7 +21,7 @@ const COLUNAS = [
   { id: 'actions', label: '', sortable: false, align: 'right' },
 ]
 
-export default function HistoryTable({ entries, sort, onSort, onRevalidate, onRemove, hasEntries }) {
+export default function HistoryTable({ entries, sort, onSort, onSelect, onRevalidate, onRemove, hasEntries }) {
   if (entries.length === 0) {
     return (
       <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
@@ -57,7 +57,13 @@ export default function HistoryTable({ entries, sort, onSort, onRevalidate, onRe
 
         <TableBody>
           {entries.map((entry) => (
-            <HistoryRow key={entry.id} entry={entry} onRevalidate={onRevalidate} onRemove={onRemove} />
+            <HistoryRow
+              key={entry.id}
+              entry={entry}
+              onSelect={onSelect}
+              onRevalidate={onRevalidate}
+              onRemove={onRemove}
+            />
           ))}
         </TableBody>
       </Table>

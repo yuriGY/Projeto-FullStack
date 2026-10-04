@@ -6,8 +6,6 @@ de linha, país e localidade.
 
 Toda a aplicação vive em uma única página HTML, sem redirecionamento entre telas.
 
-O planejamento técnico completo está em [PLANEJAMENTO.md](PLANEJAMENTO.md).
-
 ---
 
 ## Como executar
@@ -78,6 +76,19 @@ Abra **http://localhost:5173** no navegador.
 
 O resultado aparece no cartão abaixo do formulário, com validade, formato internacional, país,
 localidade, operadora e tipo de linha. O histórico fica salvo no navegador e sobrevive a um recarregamento.
+
+**O que mais a aplicação faz:**
+
+| Recurso | Onde |
+|---|---|
+| **Validar em lote** | Botão no formulário. Cole uma lista de números; a tela informa quantas consultas o lote vai gastar antes de disparar |
+| **Filtrar e buscar** | Aba Histórico. Busca por número, operadora, país ou localidade, mais filtros por situação, país, operadora e tipo de linha |
+| **Ordenar** | Clique no cabeçalho de qualquer coluna da tabela |
+| **Ver detalhes** | Clique em qualquer linha da tabela; o painel lateral abre com todos os campos (fecha com `Esc`) |
+| **Revalidar / remover** | Ícones à direita de cada linha. Revalidar ignora o cache e gasta 1 consulta |
+| **Análise** | Aba Análise. Indicadores e distribuições por país, operadora e tipo de linha. Respeita os filtros ativos na aba Histórico |
+| **Exportar CSV** | Botão na aba Histórico. Exporta a lista **filtrada no momento**, pronta para abrir no Excel |
+| **Tema claro/escuro** | Ícone no canto superior direito; a escolha fica salva |
 
 ---
 
@@ -152,7 +163,7 @@ Nenhum componente guarda cópia do histórico: tudo é derivado do estado centra
 |---|---|---|
 | 1 | Fundação, cliente HTTP, estado central, formulário e resultado | ✔ concluída |
 | 2 | Histórico em tabela, filtros, busca, cache de cota e validação em lote | ✔ concluída |
-| 3 | Painel analítico, detalhamento, exportação CSV e documentação | a fazer |
+| 3 | Painel analítico, detalhamento, exportação CSV e documentação | ✔ concluída |
 
 ---
 

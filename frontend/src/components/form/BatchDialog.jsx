@@ -32,7 +32,7 @@ export default function BatchDialog({ open, onClose }) {
 
   /**
    * Separa a lista colada em aceitos, rejeitados e duplicados, e calcula quantas
-   * requisições o lote realmente vai gastar — números já em cache saem de graça.
+   * requisições o lote realmente vai gastar, já que números em cache saem de graça.
    */
   const analise = useMemo(() => {
     const tokens = text
